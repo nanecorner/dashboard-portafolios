@@ -1,0 +1,217 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────
+// PROFILE
+// ─────────────────────────────────────────────────────────
+
+model Profile {
+  id     String @id @default(cuid())
+  slug   String @unique // identificador en la URL → /juan-perez
+  name   String
+
+  // Sección: Inicio
+  photoUrl String?
+  bio      String  // párrafo biográfico
+  quote    String? // frase opcional
+
+  // Sección: Trayectoria – CV
+  cvUrl            String?
+  cvIsDownloadable Boolean @default(true)
+
+  // Relaciones
+  researchLines  ResearchLine[]
+  awards         Award[]
+  societies      Society[]
+  collaborations Collaboration[]
+  fundings       Funding[]
+  education      Education[]
+  experience     Experience[]
+  teaching       Teaching[]
+  publications   Publication[]
+  gallery        GalleryItem[]
+  dissemination  Dissemination[]
+  footerLinks    FooterLink[]
+
+  // Sección: Personalización Visual
+  themePrimary   String? @default("#ffffff") // Fondo principal
+  themeSecondary String? @default("#000000") // Acentos y botones
+  themeFont      String? @default("Montserrat") // Fuente principal
+
+  password       String? // Log-in dashboard password
+
+  // Visibilidad de Secciones
+  showEducation     Boolean @default(true)
+  showExperience    Boolean @default(true)
+  showTeaching      Boolean @default(true)
+  showPublications  Boolean @default(true)
+  showGallery       Boolean @default(true)
+  showDissemination Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────
+// INICIO
+// ─────────────────────────────────────────────────────────
+
+model ResearchLine {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  order      Int      @default(0) // máx. 2 por perfil (0, 1)
+  title      String
+  paragraphs String[] // máx. 2 párrafos
+}
+
+model Award {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  title String
+  year  Int?
+}
+
+model Society {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  name String
+}
+
+model Collaboration {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  name String
+  url  String?
+}
+
+model Funding {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  name String
+  url  String?
+}
+
+// ─────────────────────────────────────────────────────────
+// TRAYECTORIA
+// ─────────────────────────────────────────────────────────
+
+model Education {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  graduationDate String // ej. "2015" o "Enero 2015"
+  degree         String
+  institution    String
+  city           String?
+  country        String?
+  order          Int    @default(0) // orden cronológico
+}
+
+model Experience {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  startDate   String
+  endDate     String? // null = "presente"
+  title       String
+  institution String
+  city        String?
+  country     String?
+  order       Int     @default(0)
+}
+
+model Teaching {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  curriculum  String // plan de estudio
+  course      String
+  institution String
+  city        String?
+  country     String?
+  order       Int    @default(0)
+}
+
+// ─────────────────────────────────────────────────────────
+// PUBLICACIONES
+// ─────────────────────────────────────────────────────────
+
+model Publication {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  title          String
+  date           String
+  reference      String  // tal cual se quiere mostrar
+  pdfUrl         String?
+  isDownloadable Boolean @default(true)
+  externalUrl    String?
+  order          Int     @default(0)
+}
+
+// ─────────────────────────────────────────────────────────
+// GALERÍA
+// ─────────────────────────────────────────────────────────
+
+model GalleryItem {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  imageUrl    String // Supabase Storage
+  shortName   String
+  description String?
+  order       Int     @default(0)
+}
+
+// ─────────────────────────────────────────────────────────
+// DIVULGACIÓN Y DIFUSIÓN
+// ─────────────────────────────────────────────────────────
+
+model Dissemination {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  title String
+  date  String?
+  url   String?
+  order Int     @default(0)
+}
+
+// ─────────────────────────────────────────────────────────
+// FOOTER
+// ─────────────────────────────────────────────────────────
+
+model FooterLink {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  label String
+  url   String
+  icon  String? // nombre de ícono opcional (ej. "twitter", "mail")
+  order Int     @default(0)
+}

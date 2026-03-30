@@ -1,65 +1,173 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+export default function LoginPage() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (res.ok) {
+        const { profileId } = await res.json();
+        router.push(`/profile/${profileId}/inicio`);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Credenciales inválidas");
+      }
+    } catch {
+      setError("Error de conexión");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="login-container">
+      <div className="login-card animate-fade-in">
+        <div className="login-header">
+          <div className="login-logo">🚀</div>
+          <h1>Dashboard Portafolios</h1>
+          <p>Ingresa tus credenciales para administrar tu perfil</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        <form onSubmit={handleLogin} className="login-form">
+          <div className="field">
+            <label className="field-label">Usuario (slug)</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="juan-perez"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div className="field mt-4">
+            <label className="field-label">Contraseña</label>
+            <input
+              type="password"
+              className="input"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          {error && <div className="error-message mt-4">{error}</div>}
+
+          <button
+            type="submit"
+            className={`btn btn-primary w-full mt-6 ${loading ? "loading" : ""}`}
+            disabled={loading}
           >
-            Documentation
-          </a>
+            {loading ? "Iniciando sesión..." : "Entrar al Panel"}
+          </button>
+        </form>
+
+        <div className="login-footer">
+          <p>Hecho por D'cReaM 🐢</p>
         </div>
-      </main>
+      </div>
+
+      <style jsx>{`
+        .login-container {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: radial-gradient(circle at top right, #1a1a2e, #16213e);
+          padding: 2rem;
+        }
+        .login-card {
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 24px;
+          padding: 3rem;
+          width: 100%;
+          max-width: 440px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .login-header {
+          text-align: center;
+          margin-bottom: 2.5rem;
+        }
+        .login-logo {
+          font-size: 3rem;
+          margin-bottom: 1rem;
+        }
+        .login-header h1 {
+          font-size: 1.75rem;
+          font-weight: 700;
+          color: white;
+          margin-bottom: 0.5rem;
+          letter-spacing: -0.025em;
+        }
+        .login-header p {
+          color: #94a3b8;
+          font-size: 0.9375rem;
+        }
+        .field-label {
+          color: #cbd5e1;
+          font-size: 0.875rem;
+          font-weight: 500;
+          margin-bottom: 0.5rem;
+          display: block;
+        }
+        .input {
+          width: 100%;
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: white;
+          padding: 0.875rem 1rem;
+          border-radius: 12px;
+          transition: all 0.2s ease;
+        }
+        .input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        .error-message {
+          color: #ef4444;
+          background: rgba(239, 68, 68, 0.1);
+          padding: 0.75rem;
+          border-radius: 8px;
+          font-size: 0.875rem;
+          text-align: center;
+          border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .login-footer {
+          margin-top: 3rem;
+          text-align: center;
+          color: #64748b;
+          font-size: 0.75rem;
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.6s ease-out;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

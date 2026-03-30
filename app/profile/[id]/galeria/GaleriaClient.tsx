@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCrudManager } from "@/hooks/useCrudManager";
 import { useToast } from "@/components/Toast";
 import FileUpload from "@/components/FileUpload";
 
@@ -13,59 +13,12 @@ interface Props {
 
 export default function GaleriaClient({ profileId, galleryItems }: Props) {
   const { showToast, ToastComponent } = useToast();
-  const [list, setList] = useState<Gallery[]>(galleryItems);
 
-  async function addItem() {
-    try {
-      const res = await fetch(`/api/profile/${profileId}/gallery`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageUrl: "https://via.placeholder.com/300",
-          shortName: "Nueva Foto",
-          description: "",
-          order: list.length,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      const newItem = await res.json();
-      setList([...list, newItem]);
-      showToast("Agregada");
-    } catch {
-      showToast("Error al agregar", "error");
-    }
-  }
-
-  async function deleteItem(id: string) {
-    if (!confirm("¿Eliminar de la galería?")) return;
-    try {
-      const res = await fetch(`/api/profile/${profileId}/gallery/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      setList(list.filter((i) => i.id !== id));
-      showToast("Eliminada");
-    } catch {
-      showToast("Error al eliminar", "error");
-    }
-  }
-
-  async function saveItem(item: Gallery) {
-    if (!item.shortName || !item.imageUrl || item.imageUrl.includes("placeholder")) {
-      showToast("Imagen y título son obligatorios", "error");
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/profile/${profileId}/gallery/${item.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(item),
-      });
-      if (!res.ok) throw new Error();
-      showToast("Guardado");
-    } catch {
-      showToast("Error al guardar", "error");
-    }
-  }
+  const galleryManager = useCrudManager(
+    galleryItems,
+    `/api/profile/${profileId}/gallery`,
+    () => showToast("Cambios de galería guardados")
+  );
 
   return (
     <div>
@@ -75,20 +28,45 @@ export default function GaleriaClient({ profileId, galleryItems }: Props) {
           <h1 className="section-heading">Galería</h1>
           <p className="section-subheading">Fotos y descripciones cortas.</p>
         </div>
-        <button className="btn btn-primary" onClick={addItem}>+ Nueva Foto</button>
+        <button 
+          className="btn btn-primary" 
+          onClick={() => galleryManager.add({
+            imageUrl: "https://via.placeholder.com/300",
+            shortName: "Nueva Foto",
+            description: null,
+            order: galleryManager.data.length,
+          })}
+        >
+          + Nueva Foto
+        </button>
       </div>
 
+      {galleryManager.hasChanges && (
+        <div className="flex justify-end mb-4">
+          <button 
+            className="btn btn-success px-6" 
+            onClick={async () => {
+              const result = await galleryManager.save();
+              if (!result.success) {
+                showToast("Error al guardar: " + result.error, "error");
+              }
+            }}
+            disabled={galleryManager.isSaving}
+          >
+            {galleryManager.isSaving ? "Guardando..." : "💾 Guardar cambios"}
+          </button>
+        </div>
+      )}
+
       <div className="profile-grid">
-        {list.map((item) => (
+        {galleryManager.data.map((item) => (
           <div key={item.id} className="card">
             <FileUpload
               profileId={profileId}
               label="foto de galería"
               currentUrl={item.imageUrl}
               onUploaded={(url) => {
-                const newList = [...list];
-                newList.find((x) => x.id === item.id)!.imageUrl = url;
-                setList(newList);
+                galleryManager.update(item.id, { imageUrl: url });
               }}
             />
             <div className="field mt-4">
@@ -97,9 +75,7 @@ export default function GaleriaClient({ profileId, galleryItems }: Props) {
                 className="input"
                 value={item.shortName}
                 onChange={(e) => {
-                  const newList = [...list];
-                  newList.find((x) => x.id === item.id)!.shortName = e.target.value;
-                  setList(newList);
+                  galleryManager.update(item.id, { shortName: e.target.value });
                 }}
               />
             </div>
@@ -110,19 +86,25 @@ export default function GaleriaClient({ profileId, galleryItems }: Props) {
                 rows={2}
                 value={item.description || ""}
                 onChange={(e) => {
-                  const newList = [...list];
-                  newList.find((x) => x.id === item.id)!.description = e.target.value;
-                  setList(newList);
+                  galleryManager.update(item.id, { description: e.target.value || null });
                 }}
               />
             </div>
             <div className="flex gap-2 mt-4">
-              <button className="btn btn-sm btn-primary" onClick={() => saveItem(item)}>💾 Guardar</button>
-              <button className="btn btn-sm btn-danger" onClick={() => deleteItem(item.id)}>🗑️</button>
+              <button 
+                className="btn btn-sm btn-danger" 
+                onClick={() => {
+                  if (confirm("¿Eliminar de la galería?")) {
+                    galleryManager.remove(item.id);
+                  }
+                }}
+              >
+                🗑️
+              </button>
             </div>
           </div>
         ))}
-        {list.length === 0 && <div className="card text-center py-8"><p className="text-muted">Galería vacía.</p></div>}
+        {galleryManager.data.length === 0 && <div className="card text-center py-8"><p className="text-muted">Galería vacía.</p></div>}
       </div>
     </div>
   );

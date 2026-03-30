@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useSimpleCrudManager } from "@/hooks/useCrudManager";
 import FileUpload from "@/components/FileUpload";
 import { useToast } from "@/components/Toast";
 
@@ -31,46 +31,26 @@ type Profile = {
 };
 
 export default function InicioClient({ profile }: { profile: Profile }) {
-  const [form, setForm] = useState({
-    name: profile.name,
-    bio: profile.bio,
-    quote: profile.quote ?? "",
-    cvUrl: profile.cvUrl ?? "",
-    cvIsDownloadable: profile.cvIsDownloadable,
-    themePrimary: profile.themePrimary ?? "#ffffff",
-    themeSecondary: profile.themeSecondary ?? "#000000",
-    themeFont: profile.themeFont ?? "Montserrat",
-    photoUrl: profile.photoUrl ?? "",
-  });
-  const [saving, setSaving] = useState(false);
-  const { showToast, ToastComponent } = useToast();
-
-  function update(k: string, v: string | boolean) {
-    setForm((f) => ({ ...f, [k]: v }));
-  }
-
-  async function save() {
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/profile/${profile.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          quote: form.quote || null,
-          cvUrl: form.cvUrl || null,
-          photoUrl: form.photoUrl || null,
-        }),
-      });
-      if (!res.ok) throw new Error();
+  const { data: form, update, save, hasChanges, isSaving } = useSimpleCrudManager(
+    {
+      name: profile.name,
+      bio: profile.bio,
+      quote: profile.quote ?? "",
+      cvUrl: profile.cvUrl ?? "",
+      cvIsDownloadable: profile.cvIsDownloadable,
+      themePrimary: profile.themePrimary ?? "#ffffff",
+      themeSecondary: profile.themeSecondary ?? "#000000",
+      themeFont: profile.themeFont ?? "Montserrat",
+      photoUrl: profile.photoUrl ?? "",
+    },
+    `/api/profile/${profile.id}`,
+    () => {
       showToast("Cambios guardados");
       setTimeout(() => window.location.reload(), 500);
-    } catch {
-      showToast("Error al guardar", "error");
-    } finally {
-      setSaving(false);
     }
-  }
+  );
+  
+  const { showToast, ToastComponent } = useToast();
 
   return (
     <div className="pb-20">
@@ -81,8 +61,12 @@ export default function InicioClient({ profile }: { profile: Profile }) {
           <h1 className="section-heading">Configuración General</h1>
           <p className="section-subheading">Gestiona la identidad y apariencia de tu portafolio.</p>
         </div>
-        <button className="btn btn-primary px-8" onClick={save} disabled={saving}>
-          {saving ? "Guardando..." : "💾 Guardar todo"}
+        <button 
+          className="btn btn-primary px-8" 
+          onClick={save} 
+          disabled={!hasChanges || isSaving}
+        >
+          {isSaving ? "Guardando..." : "💾 Guardar cambios"}
         </button>
       </div>
 

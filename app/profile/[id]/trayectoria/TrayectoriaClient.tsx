@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useCrudManager } from "@/hooks/useCrudManager";
 import { useToast } from "@/components/Toast";
 
 type Edu = { id: string; graduationDate: string; degree: string; institution: string; city: string | null; country: string | null; order: number };
@@ -16,43 +17,26 @@ interface Props {
 
 export default function TrayectoriaClient({ profileId, education, experience, teaching }: Props) {
   const { showToast, ToastComponent } = useToast();
-  const [eduList, setEduList] = useState<Edu[]>(education);
-  const [expList, setExpList] = useState<Exp[]>(experience);
-  const [teaList, setTeaList] = useState<Tea[]>(teaching);
   const [showTeaching, setShowTeaching] = useState(teaching.length > 0);
 
-  // Generic CRUD helpers
-  async function addItem(type: string, data: any) {
-    try {
-      const res = await fetch(`/api/profile/${profileId}/${type}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error();
-      const newItem = await res.json();
-      if (type === "education") setEduList([...eduList, newItem]);
-      if (type === "experience") setExpList([...expList, newItem]);
-      if (type === "teaching") setTeaList([...teaList, newItem]);
-      showToast("Agregado correctamente");
-    } catch {
-      showToast("Error al agregar", "error");
-    }
-  }
+  // Managers para cada sección
+  const educationManager = useCrudManager(
+    education,
+    `/api/profile/${profileId}/education`,
+    () => showToast("Cambios de formación guardados")
+  );
 
-  async function deleteItem(type: string, id: string) {
-    if (!confirm("¿Eliminar este elemento?")) return;
-    try {
-      const res = await fetch(`/api/profile/${profileId}/${type}/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      if (type === "education") setEduList(eduList.filter((i) => i.id !== id));
-      if (type === "experience") setExpList(expList.filter((i) => i.id !== id));
-      if (type === "teaching") setTeaList(teaList.filter((i) => i.id !== id));
-      showToast("Eliminado");
-    } catch {
-      showToast("Error al eliminar", "error");
-    }
-  }
+  const experienceManager = useCrudManager(
+    experience,
+    `/api/profile/${profileId}/experience`,
+    () => showToast("Cambios de experiencia guardados")
+  );
+
+  const teachingManager = useCrudManager(
+    teaching,
+    `/api/profile/${profileId}/teaching`,
+    () => showToast("Cambios de docencia guardados")
+  );
 
   return (
     <div>
@@ -64,59 +48,59 @@ export default function TrayectoriaClient({ profileId, education, experience, te
       <section className="card">
         <div className="card-header">
           <h2 className="card-title">Formación Educativa</h2>
-          <button className="btn btn-sm btn-primary" onClick={() => addItem("education", { graduationDate: "2024", degree: "Nuevo Título", institution: "Institución", order: eduList.length })}>
+          <button 
+            className="btn btn-sm btn-primary" 
+            onClick={() => educationManager.add({ graduationDate: "2024", degree: "Nuevo Título", institution: "Institución", city: null, country: null, order: educationManager.data.length })}
+          >
             + Agregar
           </button>
         </div>
+        {educationManager.hasChanges && (
+          <div className="card-header">
+            <button 
+              className="btn btn-sm btn-success" 
+              onClick={async () => {
+                const result = await educationManager.save();
+                if (!result.success) {
+                  showToast("Error al guardar: " + result.error, "error");
+                }
+              }}
+              disabled={educationManager.isSaving}
+            >
+              {educationManager.isSaving ? "Guardando..." : "💾 Guardar cambios"}
+            </button>
+          </div>
+        )}
         <div className="item-list">
-          {eduList.map((item) => (
+          {educationManager.data.map((item) => (
             <div key={item.id} className="item-row">
               <div className="item-row-body">
                 <input className="input" value={item.degree} onChange={(e) => {
-                  const newList = [...eduList];
-                  const i = newList.find(x => x.id === item.id);
-                  if (i) i.degree = e.target.value;
-                  setEduList(newList);
+                  educationManager.update(item.id, { degree: e.target.value });
                 }} />
                 <div className="field-row mt-2">
                    <input className="input text-sm" placeholder="Fecha" value={item.graduationDate} onChange={(e) => {
-                      const newList = [...eduList];
-                      const i = newList.find(x => x.id === item.id);
-                      if (i) i.graduationDate = e.target.value;
-                      setEduList(newList);
+                      educationManager.update(item.id, { graduationDate: e.target.value });
                    }} />
                    <input className="input text-sm" placeholder="Institución" value={item.institution} onChange={(e) => {
-                      const newList = [...eduList];
-                      const i = newList.find(x => x.id === item.id);
-                      if (i) i.institution = e.target.value;
-                      setEduList(newList);
+                      educationManager.update(item.id, { institution: e.target.value });
                    }} />
                 </div>
                 <div className="field-row mt-2">
                    <input className="input text-sm" placeholder="Ciudad" value={item.city || ""} onChange={(e) => {
-                      const newList = [...eduList];
-                      const i = newList.find(x => x.id === item.id);
-                      if (i) i.city = e.target.value;
-                      setEduList(newList);
+                      educationManager.update(item.id, { city: e.target.value || null });
                    }} />
                    <input className="input text-sm" placeholder="País" value={item.country || ""} onChange={(e) => {
-                      const newList = [...eduList];
-                      const i = newList.find(x => x.id === item.id);
-                      if (i) i.country = e.target.value;
-                      setEduList(newList);
+                      educationManager.update(item.id, { country: e.target.value || null });
                    }} />
                 </div>
               </div>
               <div className="item-actions">
-                <button className="btn btn-icon btn-primary" onClick={async () => {
-                   await fetch(`/api/profile/${profileId}/education/${item.id}`, {
-                     method: 'PATCH',
-                     headers: { 'Content-Type': 'application/json' },
-                     body: JSON.stringify(item)
-                   });
-                   showToast("Guardado");
-                }}>💾</button>
-                <button className="btn btn-icon btn-danger" onClick={() => deleteItem("education", item.id)}>🗑️</button>
+                <button className="btn btn-icon btn-danger" onClick={() => {
+                  if (confirm("¿Eliminar este elemento?")) {
+                    educationManager.remove(item.id);
+                  }
+                }}>🗑️</button>
               </div>
             </div>
           ))}
@@ -127,65 +111,62 @@ export default function TrayectoriaClient({ profileId, education, experience, te
       <section className="card mt-6">
         <div className="card-header">
           <h2 className="card-title">Experiencia Profesional</h2>
-          <button className="btn btn-sm btn-primary" onClick={() => addItem("experience", { startDate: "2024", title: "Nuevo Cargo", institution: "Lugar", order: expList.length })}>
+          <button 
+            className="btn btn-sm btn-primary" 
+            onClick={() => experienceManager.add({ startDate: "2024", title: "Nuevo Cargo", institution: "Lugar", city: null, country: null, endDate: null, order: experienceManager.data.length })}
+          >
             + Agregar
           </button>
         </div>
+        {experienceManager.hasChanges && (
+          <div className="card-header">
+            <button 
+              className="btn btn-sm btn-success" 
+              onClick={async () => {
+                const result = await experienceManager.save();
+                if (!result.success) {
+                  showToast("Error al guardar: " + result.error, "error");
+                }
+              }}
+              disabled={experienceManager.isSaving}
+            >
+              {experienceManager.isSaving ? "Guardando..." : "💾 Guardar cambios"}
+            </button>
+          </div>
+        )}
         <div className="item-list">
-          {expList.map((item) => (
+          {experienceManager.data.map((item) => (
             <div key={item.id} className="item-row">
               <div className="item-row-body">
                 <input className="input" value={item.title} onChange={(e) => {
-                  const newList = [...expList];
-                  const i = newList.find(x => x.id === item.id);
-                  if (i) i.title = e.target.value;
-                  setExpList(newList);
+                  experienceManager.update(item.id, { title: e.target.value });
                 }} />
                 <div className="field-row mt-2">
                    <input className="input text-sm" placeholder="Inicio" value={item.startDate} onChange={(e) => {
-                      const newList = [...expList];
-                      const i = newList.find(x => x.id === item.id);
-                      if (i) i.startDate = e.target.value;
-                      setExpList(newList);
+                      experienceManager.update(item.id, { startDate: e.target.value });
                    }} />
                    <input className="input text-sm" placeholder="Fin (o Presente)" value={item.endDate || ""} onChange={(e) => {
-                      const newList = [...expList];
-                      const i = newList.find(x => x.id === item.id);
-                      if (i) i.endDate = e.target.value;
-                      setExpList(newList);
+                      experienceManager.update(item.id, { endDate: e.target.value || null });
                    }} />
                 </div>
                 <input className="input text-sm mt-2" placeholder="Institución" value={item.institution} onChange={(e) => {
-                  const newList = [...expList];
-                  const i = newList.find(x => x.id === item.id);
-                  if (i) i.institution = e.target.value;
-                  setExpList(newList);
+                  experienceManager.update(item.id, { institution: e.target.value });
                 }} />
                 <div className="field-row mt-2">
                    <input className="input text-sm" placeholder="Ciudad" value={item.city || ""} onChange={(e) => {
-                      const newList = [...expList];
-                      const i = newList.find(x => x.id === item.id);
-                      if (i) i.city = e.target.value;
-                      setExpList(newList);
+                      experienceManager.update(item.id, { city: e.target.value || null });
                    }} />
                    <input className="input text-sm" placeholder="País" value={item.country || ""} onChange={(e) => {
-                      const newList = [...expList];
-                      const i = newList.find(x => x.id === item.id);
-                      if (i) i.country = e.target.value;
-                      setExpList(newList);
+                      experienceManager.update(item.id, { country: e.target.value || null });
                    }} />
                 </div>
               </div>
               <div className="item-actions">
-                <button className="btn btn-icon btn-primary" onClick={async () => {
-                   await fetch(`/api/profile/${profileId}/experience/${item.id}`, {
-                     method: 'PATCH',
-                     headers: { 'Content-Type': 'application/json' },
-                     body: JSON.stringify(item)
-                   });
-                   showToast("Guardado");
-                }}>💾</button>
-                <button className="btn btn-icon btn-danger" onClick={() => deleteItem("experience", item.id)}>🗑️</button>
+                <button className="btn btn-icon btn-danger" onClick={() => {
+                  if (confirm("¿Eliminar este elemento?")) {
+                    experienceManager.remove(item.id);
+                  }
+                }}>🗑️</button>
               </div>
             </div>
           ))}
@@ -203,66 +184,66 @@ export default function TrayectoriaClient({ profileId, education, experience, te
              </label>
            </div>
            {showTeaching && (
-             <button className="btn btn-sm btn-primary" onClick={() => addItem("teaching", { curriculum: "Plan", course: "Nuevo Curso", institution: "Lugar", order: teaList.length })}>
+             <button 
+               className="btn btn-sm btn-primary" 
+               onClick={() => teachingManager.add({ curriculum: "Plan", course: "Nuevo Curso", institution: "Lugar", city: null, country: null, order: teachingManager.data.length })}
+             >
                + Agregar
              </button>
            )}
         </div>
+        {showTeaching && teachingManager.hasChanges && (
+          <div className="card-header">
+            <button 
+              className="btn btn-sm btn-success" 
+              onClick={async () => {
+                const result = await teachingManager.save();
+                if (!result.success) {
+                  showToast("Error al guardar: " + result.error, "error");
+                }
+              }}
+              disabled={teachingManager.isSaving}
+            >
+              {teachingManager.isSaving ? "Guardando..." : "💾 Guardar cambios"}
+            </button>
+          </div>
+        )}
         
         {showTeaching ? (
           <div className="item-list">
-            {teaList.map((item) => (
+            {teachingManager.data.map((item) => (
               <div key={item.id} className="item-row">
                 <div className="item-row-body">
                   <input className="input" placeholder="Curso" value={item.course} onChange={(e) => {
-                    const newList = [...teaList];
-                    const i = newList.find(x => x.id === item.id);
-                    if (i) i.course = e.target.value;
-                    setTeaList(newList);
+                    teachingManager.update(item.id, { course: e.target.value });
                   }} />
                   <div className="field-row mt-2">
                      <input className="input text-sm" placeholder="Plan de estudio" value={item.curriculum} onChange={(e) => {
-                        const newList = [...teaList];
-                        const i = newList.find(x => x.id === item.id);
-                        if (i) i.curriculum = e.target.value;
-                        setTeaList(newList);
+                        teachingManager.update(item.id, { curriculum: e.target.value });
                      }} />
                      <input className="input text-sm" placeholder="Lugar" value={item.institution} onChange={(e) => {
-                        const newList = [...teaList];
-                        const i = newList.find(x => x.id === item.id);
-                        if (i) i.institution = e.target.value;
-                        setTeaList(newList);
+                        teachingManager.update(item.id, { institution: e.target.value });
                      }} />
                   </div>
                   <div className="field-row mt-2">
                      <input className="input text-sm" placeholder="Ciudad" value={item.city || ""} onChange={(e) => {
-                        const newList = [...teaList];
-                        const i = newList.find(x => x.id === item.id);
-                        if (i) i.city = e.target.value;
-                        setTeaList(newList);
+                        teachingManager.update(item.id, { city: e.target.value || null });
                      }} />
                      <input className="input text-sm" placeholder="País" value={item.country || ""} onChange={(e) => {
-                        const newList = [...teaList];
-                        const i = newList.find(x => x.id === item.id);
-                        if (i) i.country = e.target.value;
-                        setTeaList(newList);
+                        teachingManager.update(item.id, { country: e.target.value || null });
                      }} />
                   </div>
                 </div>
                 <div className="item-actions">
-                  <button className="btn btn-icon btn-primary" onClick={async () => {
-                     await fetch(`/api/profile/${profileId}/teaching/${item.id}`, {
-                       method: 'PATCH',
-                       headers: { 'Content-Type': 'application/json' },
-                       body: JSON.stringify(item)
-                     });
-                     showToast("Guardado");
-                  }}>💾</button>
-                  <button className="btn btn-icon btn-danger" onClick={() => deleteItem("teaching", item.id)}>🗑️</button>
+                  <button className="btn btn-icon btn-danger" onClick={() => {
+                    if (confirm("¿Eliminar este elemento?")) {
+                      teachingManager.remove(item.id);
+                    }
+                  }}>🗑️</button>
                 </div>
               </div>
             ))}
-            {teaList.length === 0 && <p className="text-muted text-sm text-center py-4">No hay registros de docencia.</p>}
+            {teachingManager.data.length === 0 && <p className="text-muted text-sm text-center py-4">No hay registros de docencia.</p>}
           </div>
         ) : (
           <p className="text-muted text-sm">La sección de docencia está oculta (no se mostrará en el portafolio si borras los registros o el frontend lo detecta).</p>

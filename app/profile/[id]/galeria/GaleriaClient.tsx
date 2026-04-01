@@ -23,89 +23,101 @@ export default function GaleriaClient({ profileId, galleryItems }: Props) {
   return (
     <div>
       <ToastComponent />
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h1 className="section-heading">Galería</h1>
-          <p className="section-subheading">Fotos y descripciones cortas.</p>
-        </div>
-        <button 
-          className="btn btn-primary" 
-          onClick={() => galleryManager.add({
-            imageUrl: "https://via.placeholder.com/300",
-            shortName: "Nueva Foto",
-            description: null,
-            order: galleryManager.data.length,
-          })}
-        >
-          + Nueva Foto
-        </button>
-      </div>
+      <h1 className="section-heading">Galería</h1>
+      <p className="section-subheading">Fotos y descripciones cortas.</p>
 
-      {galleryManager.hasChanges && (
-        <div className="flex justify-end mb-4">
+      {/* GALERÍA */}
+      <section className="card mt-6">
+        <div className="border-b border-gray-200 pb-4 mb-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-2">🖼️ Galería</h2>
+          <p className="text-sm text-gray-600">Fotos de proyectos, eventos y momentos destacados.</p>
+        </div>
+        
+        <div className="flex justify-between items-center mb-4">
           <button 
-            className="btn btn-success px-6" 
+            className="btn btn-primary" 
+            onClick={() => galleryManager.add({
+              imageUrl: "",
+              shortName: "",
+              description: null,
+              order: galleryManager.data.length,
+            })}
+          >
+            + Agregar Foto
+          </button>
+          
+          <button 
+            className="btn btn-success px-6 py-2 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200" 
             onClick={async () => {
               const result = await galleryManager.save();
-              if (!result.success) {
+              if (result && !result.success) {
                 showToast("Error al guardar: " + result.error, "error");
               }
             }}
-            disabled={galleryManager.isSaving}
+            disabled={galleryManager.isSaving || !galleryManager.hasChanges}
           >
-            {galleryManager.isSaving ? "Guardando..." : "💾 Guardar cambios"}
+            {galleryManager.isSaving ? "⏳ Guardando..." : "💾 Guardar cambios"}
           </button>
         </div>
-      )}
 
-      <div className="profile-grid">
-        {galleryManager.data.map((item) => (
-          <div key={item.id} className="card">
-            <FileUpload
-              profileId={profileId}
-              label="foto de galería"
-              currentUrl={item.imageUrl}
-              onUploaded={(url) => {
-                galleryManager.update(item.id, { imageUrl: url });
-              }}
-            />
-            <div className="field mt-4">
-              <label className="field-label">Título <span className="required">*</span></label>
-              <input
-                className="input"
-                value={item.shortName}
-                onChange={(e) => {
-                  galleryManager.update(item.id, { shortName: e.target.value });
-                }}
-              />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {galleryManager.data.map((item) => (
+            <div key={item.id} className="card border border-gray-200 p-4">
+              <div className="space-y-3">
+                <div className="field">
+                  <label className="field-label text-sm text-gray-600">Imagen *</label>
+                  <FileUpload
+                    profileId={profileId}
+                    label="foto de galería"
+                    currentUrl={item.imageUrl}
+                    previewStyle="cover"
+                    onUploaded={(url) => {
+                      galleryManager.update(item.id, { imageUrl: url });
+                    }}
+                  />
+                  {!item.imageUrl && (
+                    <p className="text-xs text-red-500 mt-1">La imagen es obligatoria</p>
+                  )}
+                </div>
+                <input 
+                  className="input text-sm" 
+                  placeholder="Título de la foto *" 
+                  value={item.shortName} 
+                  onChange={(e) => galleryManager.update(item.id, { shortName: e.target.value })} 
+                />
+                <textarea 
+                  className="textarea text-sm" 
+                  placeholder="Descripción breve" 
+                  value={item.description || ""} 
+                  onChange={(e) => galleryManager.update(item.id, { description: e.target.value || null })} 
+                  rows={3}
+                />
+                {!item.imageUrl && (
+                  <p className="text-xs text-red-500 mt-1">La imagen es obligatoria</p>
+                )}
+              </div>
+              <div className="flex justify-end mt-4">
+                <button 
+                  className="btn btn-sm btn-danger" 
+                  onClick={() => {
+                    if (confirm("¿Eliminar esta foto?")) {
+                      galleryManager.remove(item.id);
+                    }
+                  }}
+                >
+                  🗑️ Eliminar
+                </button>
+              </div>
             </div>
-            <div className="field mt-2">
-              <label className="field-label">Descripción</label>
-              <textarea
-                className="input"
-                rows={2}
-                value={item.description || ""}
-                onChange={(e) => {
-                  galleryManager.update(item.id, { description: e.target.value || null });
-                }}
-              />
-            </div>
-            <div className="flex gap-2 mt-4">
-              <button 
-                className="btn btn-sm btn-danger" 
-                onClick={() => {
-                  if (confirm("¿Eliminar de la galería?")) {
-                    galleryManager.remove(item.id);
-                  }
-                }}
-              >
-                🗑️
-              </button>
-            </div>
+          ))}
+        </div>
+        
+        {galleryManager.data.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <p>No hay fotos en la galería.</p>
           </div>
-        ))}
-        {galleryManager.data.length === 0 && <div className="card text-center py-8"><p className="text-muted">Galería vacía.</p></div>}
-      </div>
+        )}
+      </section>
     </div>
   );
 }

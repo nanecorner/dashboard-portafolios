@@ -22,80 +22,82 @@ export default function LinksClient({ profileId, footerLinks }: Props) {
   return (
     <div>
       <ToastComponent />
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h1 className="section-heading">Links (Footer)</h1>
-          <p className="section-subheading">Redes sociales y enlaces rápidos.</p>
-        </div>
-        <button 
-          className="btn btn-primary" 
-          onClick={() => linksManager.add({
-            label: "Nuevo Link",
-            url: "https://",
-            icon: "link",
-            order: linksManager.data.length,
-          })}
-        >
-          + Nuevo Link
-        </button>
-      </div>
+      <h1 className="section-heading">Links (Footer)</h1>
+      <p className="section-subheading">Redes sociales y enlaces rápidos.</p>
 
-      {linksManager.hasChanges && (
-        <div className="flex justify-end mb-4">
+      {/* LINKS */}
+      <section className="card mt-6">
+        <div className="border-b border-gray-200 pb-4 mb-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-2">🔗 Links del Footer</h2>
+          <p className="text-sm text-gray-600">Redes sociales, sitios web y enlaces importantes.</p>
+        </div>
+        
+        <div className="flex justify-between items-center mb-4">
           <button 
-            className="btn btn-success px-6" 
+            className="btn btn-primary" 
+            onClick={() => linksManager.add({
+              label: "",
+              url: "",
+              icon: null,
+              order: linksManager.data.length,
+            })}
+          >
+            + Agregar Link
+          </button>
+          
+          <button 
+            className="btn btn-success px-6 py-2 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200" 
             onClick={async () => {
               const result = await linksManager.save();
-              if (!result.success) {
+              if (result && !result.success) {
                 showToast("Error al guardar: " + result.error, "error");
               }
             }}
-            disabled={linksManager.isSaving}
+            disabled={linksManager.isSaving || !linksManager.hasChanges}
           >
-            {linksManager.isSaving ? "Guardando..." : "💾 Guardar cambios"}
+            {linksManager.isSaving ? "⏳ Guardando..." : "💾 Guardar cambios"}
           </button>
         </div>
-      )}
 
-      <div className="item-list">
-        {linksManager.data.map((item) => (
-          <div key={item.id} className="item-row">
-            <div className="item-row-body">
-              <div className="field-row">
-                <input
-                  className="input"
-                  placeholder="Ej: Twitter, Web, etc."
-                  value={item.label}
-                  onChange={(e) => {
-                    linksManager.update(item.id, { label: e.target.value });
-                  }}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {linksManager.data.map((item) => (
+            <div key={item.id} className="card border border-gray-200 p-4">
+              <div className="space-y-3">
+                <input 
+                  className="input" 
+                  placeholder="Nombre del enlace *" 
+                  value={item.label} 
+                  onChange={(e) => linksManager.update(item.id, { label: e.target.value })} 
                 />
-                <input
-                  className="input"
-                  placeholder="https://..."
-                  value={item.url}
-                  onChange={(e) => {
-                    linksManager.update(item.id, { url: e.target.value });
-                  }}
+                <input 
+                  className="input text-sm" 
+                  placeholder="URL del enlace *" 
+                  value={item.url} 
+                  onChange={(e) => linksManager.update(item.id, { url: e.target.value })} 
                 />
               </div>
+              <div className="flex justify-end mt-4">
+                <button 
+                  className="btn btn-sm btn-danger" 
+                  onClick={() => {
+                    if (confirm("¿Eliminar este enlace?")) {
+                      linksManager.remove(item.id);
+                    }
+                  }}
+                >
+                  🗑️ Eliminar
+                </button>
+              </div>
             </div>
-            <div className="item-actions">
-              <button 
-                className="btn btn-icon btn-danger" 
-                onClick={() => {
-                  if (confirm("¿Eliminar este link?")) {
-                    linksManager.remove(item.id);
-                  }
-                }}
-              >
-                🗑️
-              </button>
-            </div>
+          ))}
+        </div>
+        
+        {linksManager.data.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <p>No hay enlaces agregados.</p>
           </div>
-        ))}
-        {linksManager.data.length === 0 && <div className="card text-center py-8"><p className="text-muted">No has agregado links aún.</p></div>}
-      </div>
+        )}
+      </section>
     </div>
   );
 }

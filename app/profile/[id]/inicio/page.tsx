@@ -5,14 +5,21 @@ export default async function InicioPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const profile = await prisma.profile.findUnique({
     where: { id },
-    include: {
-      researchLines: { orderBy: { order: "asc" } },
-      awards: true,
-      societies: true,
-      collaborations: true,
-      fundings: true,
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      photoUrl: true,
+      bio: true,
+      quote: true,
+      cvUrl: true,
+      themePrimary: true,
+      themeSecondary: true,
+      themeFont: true,
     },
   });
+
   if (!profile) return <p>Perfil no encontrado</p>;
+
   return <InicioClient profile={profile} />;
 }

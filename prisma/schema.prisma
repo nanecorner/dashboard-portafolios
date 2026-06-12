@@ -25,7 +25,6 @@ model Profile {
 
   // Sección: Trayectoria – CV
   cvUrl            String?
-  cvIsDownloadable Boolean @default(true)
 
   // Relaciones
   researchLines  ResearchLine[]
@@ -48,13 +47,7 @@ model Profile {
 
   password       String? // Log-in dashboard password
 
-  // Visibilidad de Secciones
-  showEducation     Boolean @default(true)
-  showExperience    Boolean @default(true)
-  showTeaching      Boolean @default(true)
-  showPublications  Boolean @default(true)
-  showGallery       Boolean @default(true)
-  showDissemination Boolean @default(true)
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

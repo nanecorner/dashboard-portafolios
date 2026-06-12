@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 const NAV = [
-  { href: "inicio",        label: "Inicio",        icon: "🏠" },
-  { href: "trayectoria",   label: "Trayectoria",   icon: "📚" },
+  { href: "inicio",        label: "Configuración General", icon: "⚙️" },
+  { href: "sobre-mi",      label: "Sobre mí",              icon: "👤" },
+  { href: "trayectoria",   label: "Trayectoria",           icon: "📚" },
   { href: "publicaciones", label: "Publicaciones", icon: "📄" },
   { href: "galeria",       label: "Galería",       icon: "🖼️" },
   { href: "divulgacion",   label: "Divulgación",   icon: "📢" },

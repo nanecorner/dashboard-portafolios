@@ -41,7 +41,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const deny = await auth(id);
   if (deny) return deny;
 
-  const body = await req.json();
-  const updated = await prisma.profile.update({ where: { id }, data: body });
-  return NextResponse.json(updated);
+  try {
+    const body = await req.json();
+    const updated = await prisma.profile.update({ where: { id }, data: body });
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("PATCH profile error:", error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
 }

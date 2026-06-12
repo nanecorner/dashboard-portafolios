@@ -24,20 +24,22 @@ type Profile = {
   bio: string;
   quote: string | null;
   cvUrl: string | null;
-  cvIsDownloadable: boolean;
   themePrimary: string | null;
   themeSecondary: string | null;
   themeFont: string | null;
 };
 
-export default function InicioClient({ profile }: { profile: Profile }) {
+interface Props {
+  profile: Profile;
+}
+
+export default function InicioClient({ profile }: Props) {
   const { data: form, update, save, hasChanges, isSaving } = useSimpleCrudManager(
     {
       name: profile.name,
       bio: profile.bio,
       quote: profile.quote ?? "",
       cvUrl: profile.cvUrl ?? "",
-      cvIsDownloadable: profile.cvIsDownloadable,
       themePrimary: profile.themePrimary ?? "#ffffff",
       themeSecondary: profile.themeSecondary ?? "#000000",
       themeFont: profile.themeFont ?? "Montserrat",
@@ -49,171 +51,87 @@ export default function InicioClient({ profile }: { profile: Profile }) {
       setTimeout(() => window.location.reload(), 500);
     }
   );
-  
+
   const { showToast, ToastComponent } = useToast();
 
   return (
     <div className="pb-20">
       <ToastComponent />
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 border-b border-[var(--user-border)] pb-4">
         <div>
           <h1 className="section-heading">Configuración General</h1>
-          <p className="section-subheading">Gestiona la identidad y apariencia de tu portafolio.</p>
+          <p className="section-subheading">Gestiona la identidad y apariencia principal de tu portafolio.</p>
         </div>
-        <button 
-          className="btn btn-primary px-8" 
-          onClick={save} 
+        <button
+          className="btn btn-primary px-8"
+          onClick={save}
           disabled={!hasChanges || isSaving}
         >
-          {isSaving ? "Guardando..." : "💾 Guardar cambios"}
+          {isSaving ? "Guardando..." : "💾 Guardar General"}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
         {/* ── Columna izquierda ── */}
         <div className="space-y-6">
-
-          {/* Identidad */}
           <div className="card">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">👤 Identidad</h2>
-
             <div className="field">
               <label className="field-label">Nombre <span className="required">*</span></label>
-              <input
-                className="input"
-                value={form.name}
-                onChange={(e) => update("name", e.target.value)}
-              />
+              <input className="input" value={form.name} onChange={(e) => update({ name: e.target.value })} />
             </div>
-
             <div className="field mt-5">
               <label className="field-label">Foto de portada</label>
-              <FileUpload
-                profileId={profile.id}
-                label="foto de portada"
-                currentUrl={form.photoUrl}
-                previewStyle="cover"
-                onUploaded={(url) => update("photoUrl", url)}
-              />
+              <FileUpload profileId={profile.id} label="foto de portada" currentUrl={form.photoUrl} previewStyle="cover" onUploaded={(url) => update({ photoUrl: url })} />
             </div>
-
             <div className="field mt-5">
               <label className="field-label">Biografía</label>
-              <textarea
-                className="textarea"
-                value={form.bio}
-                onChange={(e) => update("bio", e.target.value)}
-                rows={4}
-              />
+              <textarea className="textarea" value={form.bio} onChange={(e) => update({ bio: e.target.value })} rows={4} />
             </div>
-
             <div className="field mt-5">
               <label className="field-label">Frase destacada</label>
-              <textarea
-                className="textarea"
-                value={form.quote}
-                onChange={(e) => update("quote", e.target.value)}
-                rows={3}
-                placeholder="Una frase que te represente (opcional)"
-              />
-              <p style={{ fontSize: "0.72rem", color: "var(--user-text-muted)", marginTop: 6 }}>
-                Se muestra como cita en el inicio del portafolio.
-              </p>
+              <textarea className="textarea" value={form.quote} onChange={(e) => update({ quote: e.target.value })} rows={3} placeholder="Una frase que te represente (opcional)" />
+              <p style={{ fontSize: "0.72rem", color: "var(--user-text-muted)", marginTop: 6 }}>Se muestra como cita en el inicio del portafolio.</p>
             </div>
           </div>
         </div>
 
         {/* ── Columna derecha ── */}
         <div className="space-y-6">
-
-          {/* Apariencia */}
           <div className="card">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">🎨 Apariencia Visual</h2>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="field">
                 <label className="field-label">Color de Fondo</label>
                 <div className="flex gap-2">
-                  <input
-                    type="color"
-                    title="Seleccionar color de fondo"
-                    style={{ height: 40, width: 40, padding: 0, border: "none", background: "transparent", cursor: "pointer", borderRadius: 8 }}
-                    value={form.themePrimary}
-                    onChange={e => update("themePrimary", e.target.value)}
-                  />
-                  <input className="input text-xs font-mono" value={form.themePrimary} onChange={e => update("themePrimary", e.target.value)} />
+                  <input type="color" style={{ height: 40, width: 40, padding: 0, border: "none", background: "transparent", cursor: "pointer", borderRadius: 8 }} value={form.themePrimary} onChange={e => update({ themePrimary: e.target.value })} />
+                  <input className="input text-xs font-mono" value={form.themePrimary} onChange={e => update({ themePrimary: e.target.value })} />
                 </div>
               </div>
               <div className="field">
                 <label className="field-label">Acento / Botones</label>
                 <div className="flex gap-2">
-                  <input
-                    type="color"
-                    title="Seleccionar color de acento"
-                    style={{ height: 40, width: 40, padding: 0, border: "none", background: "transparent", cursor: "pointer", borderRadius: 8 }}
-                    value={form.themeSecondary}
-                    onChange={e => update("themeSecondary", e.target.value)}
-                  />
-                  <input className="input text-xs font-mono" value={form.themeSecondary} onChange={e => update("themeSecondary", e.target.value)} />
+                  <input type="color" style={{ height: 40, width: 40, padding: 0, border: "none", background: "transparent", cursor: "pointer", borderRadius: 8 }} value={form.themeSecondary} onChange={e => update({ themeSecondary: e.target.value })} />
+                  <input className="input text-xs font-mono" value={form.themeSecondary} onChange={e => update({ themeSecondary: e.target.value })} />
                 </div>
               </div>
             </div>
-
             <div className="field mt-4">
               <label className="field-label">Tipografía</label>
-              <select
-                className="input"
-                value={form.themeFont}
-                onChange={e => update("themeFont", e.target.value)}
-              >
-                {FONTS.map(f => (
-                  <option key={f.value} value={f.value}>{f.label}</option>
-                ))}
+              <select className="input" value={form.themeFont} onChange={e => update({ themeFont: e.target.value })}>
+                {FONTS.map(f => (<option key={f.value} value={f.value}>{f.label}</option>))}
               </select>
             </div>
           </div>
 
-          {/* CV */}
           <div className="card">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">📄 Currículum Vitae</h2>
-            <FileUpload
-              profileId={profile.id}
-              label="PDF del CV"
-              currentUrl={form.cvUrl}
-              bucket="pdfs"
-              accept=".pdf"
-              previewStyle="document"
-              onUploaded={(url) => update("cvUrl", url)}
-            />
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginTop: 12,
-                padding: "0.75rem 1rem",
-                borderRadius: 12,
-                background: "var(--user-input-bg)",
-                border: "1px solid var(--user-border)",
-              }}
-            >
-              <div>
-                <p style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--user-text)" }}>Permitir descarga</p>
-                <p style={{ fontSize: "0.7rem", color: "var(--user-text-muted)" }}>Los visitantes podrán descargar el PDF</p>
-              </div>
-              <input
-                type="checkbox"
-                checked={form.cvIsDownloadable}
-                onChange={(e) => update("cvIsDownloadable", e.target.checked)}
-                style={{ width: 18, height: 18, cursor: "pointer", accentColor: "var(--user-accent)" }}
-              />
-            </div>
+            <FileUpload profileId={profile.id} label="PDF del CV" currentUrl={form.cvUrl} bucket="pdfs" accept=".pdf" previewStyle="document" onUploaded={(url) => update({ cvUrl: url })} />
           </div>
-
         </div>
       </div>
+
     </div>
   );
 }

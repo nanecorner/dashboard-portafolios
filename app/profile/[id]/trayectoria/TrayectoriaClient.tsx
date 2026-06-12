@@ -6,7 +6,7 @@ import { useToast } from "@/components/Toast";
 
 type Edu = { id: string; graduationDate: string; degree: string; institution: string; city: string | null; country: string | null; order: number };
 type Exp = { id: string; startDate: string; endDate: string | null; title: string; institution: string; city: string | null; country: string | null; order: number };
-type Tea = { id: string; curriculum: string; course: string; institution: string; startDate: string | null; endDate: string | null; city: string | null; country: string | null; order: number };
+type Tea = { id: string; curriculum: string; course: string; institution: string; city: string | null; country: string | null; order: number };
 
 interface Props {
   profileId: string;
@@ -239,7 +239,7 @@ export default function TrayectoriaClient({ profileId, education, experience, te
         <div className="flex justify-between items-center mb-4">
           <button 
             className="btn btn-primary" 
-            onClick={() => teachingManager.add({ curriculum: "", course: "", institution: "", startDate: null, endDate: null, city: null, country: null, order: teachingManager.data.length })}
+            onClick={() => teachingManager.add({ curriculum: "", course: "", institution: "", city: null, country: null, order: teachingManager.data.length })}
           >
             + Agregar Docencia
           </button>
@@ -280,20 +280,7 @@ export default function TrayectoriaClient({ profileId, education, experience, te
                   value={item.institution} 
                   onChange={(e) => teachingManager.update(item.id, { institution: e.target.value })} 
                 />
-                <div className="grid grid-cols-2 gap-2">
-                  <input 
-                    className="input text-sm" 
-                    placeholder="Fecha inicio *" 
-                    value={item.startDate || ""} 
-                    onChange={(e) => teachingManager.update(item.id, { startDate: e.target.value || null })} 
-                  />
-                  <input 
-                    className="input text-sm" 
-                    placeholder="Fecha fin" 
-                    value={item.endDate || ""} 
-                    onChange={(e) => teachingManager.update(item.id, { endDate: e.target.value || null })} 
-                  />
-                </div>
+
                 <div className="grid grid-cols-2 gap-2">
                   <input 
                     className="input text-sm" 

@@ -15,8 +15,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   if (!file) return NextResponse.json({ error: "No se envió archivo" }, { status: 400 });
 
-  const ext = file.name.split(".").pop();
-  const path = `${id}/${Date.now()}.${ext}`;
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+  const path = `${id}/${Date.now()}-${safeName}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const { error } = await supabaseAdmin.storage

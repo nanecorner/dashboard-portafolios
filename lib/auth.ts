@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 
 const SESSION_COOKIE = "dash_session";
 const SECRET = process.env.SESSION_SECRET ?? "fallback_secret";
@@ -34,7 +35,7 @@ export async function getSession(): Promise<{ profileId: string; slug: string } 
   return verifyToken(token);
 }
 
-export function setSessionCookie(token: string): Record<string, string | boolean | number> {
+export function setSessionCookie(token: string): ResponseCookie {
   return {
     name: SESSION_COOKIE,
     value: token,
@@ -45,7 +46,7 @@ export function setSessionCookie(token: string): Record<string, string | boolean
   };
 }
 
-export function clearSessionCookie(): Record<string, string | boolean | number> {
+export function clearSessionCookie(): ResponseCookie {
   return {
     name: SESSION_COOKIE,
     value: "",

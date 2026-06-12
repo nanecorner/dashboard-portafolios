@@ -4,6 +4,6 @@ import { clearSessionCookie } from "@/lib/auth";
 export async function POST() {
   const cookieDef = clearSessionCookie();
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(cookieDef as Parameters<typeof res.cookies.set>[0]);
+  res.cookies.set(cookieDef);
   return res;
 }
